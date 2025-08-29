@@ -7,6 +7,8 @@ from langchain_core.tools import BaseTool
 from langchain_core.utils import get_from_dict_or_env
 from pydantic import model_validator
 
+from types import GeneratorType
+
 
 def _import_elevenlabs() -> Any:
     try:
@@ -68,7 +70,11 @@ class ElevenLabsText2SpeechTool(BaseTool):
             with tempfile.NamedTemporaryFile(
                 mode="bx", suffix=".mp3", delete=False
             ) as f:
-                f.write(speech)
+                if isinstance(speech, GeneratorType):
+                    for byte_chunk in speech:
+                        f.write(byte_chunk)
+                else:
+                    f.write(speech)
             return f.name
         except Exception as e:
             raise RuntimeError(f"Error while running ElevenLabsText2SpeechTool: {e}")
